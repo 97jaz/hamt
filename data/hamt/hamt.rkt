@@ -7,6 +7,7 @@
          "array.rkt")
 
 (require racket/require
+         racket/performance-hint
          (for-syntax racket/base)
          (filtered-in
           (λ (name) (regexp-replace #rx"unsafe-" name ""))
@@ -318,18 +319,6 @@
            [else
             node])]))
 
-(define (bnode-array-ref node keyhash shift)
-  (match node
-    [(bnode arr bitmap)
-     (define bit (bnode-bit keyhash shift))
-     
-     (cond [(bit-set? bitmap bit) 
-            (define idx (bnode-idx bitmap bit))
-
-            (array-ref arr idx)]
-           [else
-            #f])]))
-
 (define (cnode-array-ref node key keyhash key=)
   (match node
     [(cnode arr hashcode)
@@ -342,17 +331,6 @@
                [e (in-value (array-ref arr i))]
                #:when (key= key (entry-key e)))
             i))
-
-(define (bnode-bit keyhash shift)
-  (fxlshift 
-   1 
-   (fxand (fxrshift keyhash shift) #x1f)))
-
-(define (bnode-idx bitmap bit)
-  (popcount32 (fxand bitmap (fx- bit 1))))
-
-(define (bit-set? bitmap bit)
-  (not (fx= 0 (fxand bitmap bit))))
 
 (define (make-node k1 v1 k2 v2 k2hash key= key# shift)
   (define k1hash (key# k1))
@@ -369,23 +347,8 @@
        (fx> shift 0)
        (entry? (array-ref arr 0))))
 
-(define *nothing* (list '*nothing*))
-(define *empty-bnode* (bnode (array) 0))
-
-(define (down shift)
-  (fx+ shift 5))
-
-(define (return default)
-  (if (procedure? default)
-      (default)
-      default))
-
 (define (generate-hamt-position h)
   (generator () (hamt-fold h #f (λ (k v _) (yield (entry k v)) #f))))
-
-(define (nothing? x) (eq? x *nothing*))
-
-
 
 (define (odd-kvlist-message name key)
   (format (string-append "~a: key does not have a value "
@@ -393,3 +356,40 @@
                          "\tkey: ~s")
           name
           key))
+
+(begin-encourage-inline
+
+  (define (bnode-array-ref node keyhash shift)
+    (match node
+      [(bnode arr bitmap)
+       (define bit (bnode-bit keyhash shift))
+     
+       (cond [(bit-set? bitmap bit) 
+              (define idx (bnode-idx bitmap bit))
+
+              (array-ref arr idx)]
+             [else
+              #f])]))
+
+  (define (bnode-bit keyhash shift)
+    (fxlshift 1 
+              (fxand (fxrshift keyhash shift) #x1f)))
+
+  (define (bnode-idx bitmap bit)
+    (popcount32 (fxand bitmap (fx- bit 1))))
+
+  (define (bit-set? bitmap bit)
+    (not (fx= 0 (fxand bitmap bit))))
+  
+  (define (down shift)
+    (fx+ shift 5))
+
+  (define (return default)
+    (if (procedure? default)
+        (default)
+        default))
+  
+  (define (nothing? x) (eq? x *nothing*)))
+
+(define *nothing* (list '*nothing*))
+(define *empty-bnode* (bnode (array) 0))
