@@ -1,7 +1,7 @@
 #lang racket/base
 
 (require racket/contract/base
-         "hamt/hamt.rkt")
+         "hamt/fast.rkt")
 
 (provide/contract
  [hamt          (() #:rest (listof any/c) . ->* . (and/c hamt? hamt-equal?))]

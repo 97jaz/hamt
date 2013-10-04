@@ -382,7 +382,7 @@
     (not (fx= 0 (fxand bitmap bit))))
   
   (define (down shift)
-    (fx+ shift 5))
+    (fx+ shift 4))
 
   (define (return default)
     (if (procedure? default)
