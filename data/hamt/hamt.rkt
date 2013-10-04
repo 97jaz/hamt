@@ -3,7 +3,7 @@
 (require racket/match
          racket/generator
          racket/dict
-         (only-in rnrs/arithmetic/bitwise-6 bitwise-bit-count)
+         "popcount.rkt"
          "array.rkt")
 
 (require racket/require
@@ -349,12 +349,10 @@
    (fxand (fxrshift keyhash shift) #x1f)))
 
 (define (bnode-idx bitmap bit)
-  (popcount (fxand bitmap (fx- bit 1))))
+  (popcount32 (fxand bitmap (fx- bit 1))))
 
 (define (bit-set? bitmap bit)
   (not (fx= 0 (fxand bitmap bit))))
-
-(define popcount bitwise-bit-count)
 
 (define (make-node k1 v1 k2 v2 k2hash key= key# shift)
   (define k1hash (key# k1))
