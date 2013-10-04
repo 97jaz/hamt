@@ -16,10 +16,17 @@
            #:url "http://lampwww.epfl.ch/papers/idealhashtrees.pdf"]
 ]
 
+@(define (mutable-key-caveat)
+  @elemref['(caveat "mutable-keys")]{caveat concerning mutable keys})
+
+@(define (see-also-mutable-key-caveat)
+   @t{See also the @mutable-key-caveat[] above.})
+
+
 @defmodule[data/hamt]
 
 This package defines @deftech{immutable hash array mapped tries} (or @deftech{HAMT}s, for short).
-An @tech{HAMT} is a @tech[#:doc '(lib "scribblings/reference/dicts.scrbl")]{dictionary}, and its
+A @tech{HAMT} is a @tech[#:doc '(lib "scribblings/reference/dicts.scrbl")]{dictionary}, and its
 interface mimics that of an immutable @tech[#:doc '(lib "scribblings/reference/hashes.scrbl")]{hash table}.
 
 Hash array mapped tries are described in @cite["Bagwell2000"].
@@ -30,14 +37,10 @@ keys:}} If a key in an @racket[equal?]-based @tech{HAMT} is mutated
 @tech{HAMT}'s behavior for insertion, lookup, and remove operations
 becomes unpredictable.
 
-@(define (mutable-key-caveat)
-  @elemref['(caveat "mutable-keys")]{caveat concerning mutable keys})
 
-@(define (see-also-mutable-key-caveat)
-   @t{See also the @mutable-key-caveat[] above.})
 
 @defproc[(hamt? [v any/c]) boolean?]{
-Returns @racket[#t] if @racket[v] is an @tech{HAMT}, @racket[#f] otherwise.
+Returns @racket[#t] if @racket[v] is a @tech{HAMT}, @racket[#f] otherwise.
 }
 
 @deftogether[(
@@ -55,12 +58,12 @@ Returns @racket[#t] if @racket[v] is an @tech{HAMT}, @racket[#f] otherwise.
   @defproc[(hamteqv [key any/c] [val any/c] ... ...) (and/c hamt? hamt-eqv?)]
   @defproc[(hamteq [key any/c] [val any/c] ... ...) (and/c hamt? hamt-eq?)]
 )]{
-Creates an @tech{HAMT} with each @racket[key] mapped to the following @racket[val].
+Creates a @tech{HAMT} with each @racket[key] mapped to the following @racket[val].
 Each @racket[key] must have a @racket[val], so the total number of arguments must be even.
 
-The @racket[hamt] procedure creates an @tech{HAMT} where keys are compared with @racket[equal?],
-@racket[hamteqv] creates an @tech{HAMT} where keys are compared with @racket[eqv?], and
-@racket[hamteq] creates an @tech{HAMT} where keys are compared with @racket[eq?].
+The @racket[hamt] procedure creates a @tech{HAMT} where keys are compared with @racket[equal?],
+@racket[hamteqv] creates a @tech{HAMT} where keys are compared with @racket[eqv?], and
+@racket[hamteq] creates a @tech{HAMT} where keys are compared with @racket[eq?].
 
 The @racket[key] to @racket[val] mappings are added to the table in the order they appear in
 the argument list, so later mappings can hide earlier ones if the @racket[key]s are equal.
@@ -71,14 +74,14 @@ the argument list, so later mappings can hide earlier ones if the @racket[key]s 
    @defproc[(make-hamteqv [assocs (listof pair?) null]) (and/c hamt? hamt-eqv?)]
    @defproc[(make-hamteq [assocs (listof pair?) null]) (and/c hamt? hamt-eq?)]
 )]{
-Creates an @tech{HAMT} that is initialized with the contents of @racket[assocs]. In each element of
+Creates a @tech{HAMT} that is initialized with the contents of @racket[assocs]. In each element of
 @racket[assocs], the @racket[car] is a key, and the @racket[cdr] is the corresponding value. The mappings 
 are added to the table in the order they appear in the argument list, so later mappings can hide earlier
 ones if the @racket[key]s are equal.
 
-@racket[make-hamt] creates an @tech{HAMT} where the keys are compared with @racket[equal?],
-@racket[make-hamteqv] creates an @tech{HAMT} where the keys are compared with @racket[eqv?], and
-@racket[make-hamteq] creates an @tech{HAMT} where the keys are compared with @racket[eq?].
+@racket[make-hamt] creates a @tech{HAMT} where the keys are compared with @racket[equal?],
+@racket[make-hamteqv] creates a @tech{HAMT} where the keys are compared with @racket[eqv?], and
+@racket[make-hamteq] creates a @tech{HAMT} where the keys are compared with @racket[eq?].
 }
 
 @defproc[(hamt-set [hamt hamt?] [key any/c] [v any/c]) hamt?]{
@@ -156,3 +159,32 @@ Returns a list of the keys in @racket[hamt] in an unspecified order.
 @defproc[(hamt-values [hamt hamt?]) (listof any/c)]{
 Returns a list of the values in @racket[hamt] in an unspecified order.
 }
+
+
+@defmodule[data/hamt/fast]
+
+This package provides exactly the same interface as @racket[data/hamt], but the procedures that it
+exports are not wrapped in contracts. Therefore, passing unexpected kinds of data to these procedures will 
+likely result in error messages that aren't especially helpful. On the other hand, they will run much
+faster than than their counterparts with contracts.
+
+@section{Performance}
+
+Because @racket[data/hamt] provides essentially the same functionality as Racket's built-in @racket[hash]
+data type, there would be no point in using the former unless it provided some advantage over the latter.
+With contracts on, a @racket[hamt] is usually slower than a @racket[hash], but with contracts off, it is
+usually faster. (You can validate this claim using the @racket[perf.rkt] script included in the @racket[test]
+directory of this package.) Therefore, I recommend using @racket[data/hamt/fast] for production use.
+
+A @racket[hamt] is a tree with a branching factor of 16, so, while Racket's built-in @racket[hash] data type 
+provides @math{O(log_2 N)} access and update, a @racket[hamt] provides the same operations at @math{O(log_16 N)}.
+That said, @racket[hash] has lower constant-time overhead, and it's implemented in C. My tests indicate that
+@racket[hash] tends to have slightly better access performance, and @racket[hamt] tends to be slightly faster 
+at insertion and removal. (Rather perplexingly, @racket[hash] seems to perform best on all operations when given
+sequential fixnums as keys.) You should do your own performance testing before concluding what kind of immutable
+dictionary to use in your program.
+
+
+
+
+
