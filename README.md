@@ -7,7 +7,7 @@ Jon Zeppieri <[zeppieri@gmail.com](mailto:zeppieri@gmail.com)>
 ```
 
 This package defines _immutable hash array mapped tries_ (or _HAMT_s,
-for short). An HAMT is a dictionary, and its interface mimics that of an
+for short). A HAMT is a dictionary, and its interface mimics that of an
 immutable hash table.
 
 Hash array mapped tries are described in [Bagwell2000].
@@ -22,7 +22,7 @@ unpredictable.
   v : any/c          
 ```
 
-Returns `#t` if `v` is an HAMT, `#f` otherwise.
+Returns `#t` if `v` is a HAMT, `#f` otherwise.
 
 ```racket
 (hamt-equal? hamt) -> boolean?
@@ -50,12 +50,12 @@ if the given HAMT’s keys are compared with `eq?`, `#f` otherwise.
   val : any/c                                       
 ```
 
-Creates an HAMT with each `key` mapped to the following `val`. Each
-`key` must have a `val`, so the total number of arguments must be even.
+Creates a HAMT with each `key` mapped to the following `val`. Each `key`
+must have a `val`, so the total number of arguments must be even.
 
-The `hamt` procedure creates an HAMT where keys are compared with
-`equal?`, `hamteqv` creates an HAMT where keys are compared with `eqv?`,
-and `hamteq` creates an HAMT where keys are compared with `eq?`.
+The `hamt` procedure creates a HAMT where keys are compared with
+`equal?`, `hamteqv` creates a HAMT where keys are compared with `eqv?`,
+and `hamteq` creates a HAMT where keys are compared with `eq?`.
 
 The `key` to `val` mappings are added to the table in the order they
 appear in the argument list, so later mappings can hide earlier ones if
@@ -70,16 +70,15 @@ the `key`s are equal.
   assocs : (listof pair?) = null                  
 ```
 
-Creates an HAMT that is initialized with the contents of `assocs`. In
+Creates a HAMT that is initialized with the contents of `assocs`. In
 each element of `assocs`, the `car` is a key, and the `cdr` is the
 corresponding value. The mappings are added to the table in the order
 they appear in the argument list, so later mappings can hide earlier
 ones if the `key`s are equal.
 
-`make-hamt` creates an HAMT where the keys are compared with `equal?`,
-`make-hamteqv` creates an HAMT where the keys are compared with `eqv?`,
-and `make-hamteq` creates an HAMT where the keys are compared with
-`eq?`.
+`make-hamt` creates a HAMT where the keys are compared with `equal?`,
+`make-hamteqv` creates a HAMT where the keys are compared with `eqv?`,
+and `make-hamteq` creates a HAMT where the keys are compared with `eq?`.
 
 ```racket
 (hamt-set hamt key v) -> hamt?
@@ -200,8 +199,39 @@ Returns a list of the keys in `hamt` in an unspecified order.
 
 Returns a list of the values in `hamt` in an unspecified order.
 
+```racket
+ (require data/hamt/fast)
+```
+
+This package provides exactly the same interface as `data/hamt`, but the
+procedures that it exports are not wrapped in contracts. Therefore,
+passing unexpected kinds of data to these procedures will likely result
+in error messages that aren’t especially helpful. On the other hand,
+they will run much faster than than their counterparts with contracts.
+
 # Bibliography
 
 [Bagwell2000] Phil Bagwell, “Ideal Hash Trees,” (Report). Infoscience Department,
               École Polytechnique Fédérale de Lausanne, 2000.                    
               `http://lampwww.epfl.ch/papers/idealhashtrees.pdf`                 
+
+# 1. Performance
+
+Because `data/hamt` provides essentially the same functionality as
+Racket’s built-in `hash` data type, there would be no point in using the
+former unless it provided some advantage over the latter. With contracts
+on, a `hamt` is usually slower than a `hash`, but with contracts off, it
+is usually faster. (You can validate this claim using the `perf.rkt`
+script included in the `test` directory of this package.) Therefore, I
+recommend using `data/hamt/fast` for production use.
+
+A `hamt` is a tree with a branching factor of 16, so, while Racket’s
+built-in `hash` data type provides _O_(_log___2___ N_)__ access and
+update, a `hamt` provides the same operations at _O_(_log___1__6___
+N_)__. That said, `hash` has lower constant-time overhead, and it’s
+implemented in C. My tests indicate that `hash` tends to have slightly
+better access performance, and `hamt` tends to be slightly faster at
+insertion and removal. (Rather perplexingly, `hash` seems to perform
+best on all operations when given sequential fixnums as keys.) You
+should do your own performance testing before concluding what kind of
+immutable dictionary to use in your program.
