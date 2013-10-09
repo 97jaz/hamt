@@ -70,8 +70,8 @@
         (hamt-set h (car pair) (cdr pair))))))
 
 (define-hamt-constructors hamt make-hamt equal? equal-hash-code)
-(define-hamt-constructors hamteqv make-hamteqv equal? eqv-hash-code)
-(define-hamt-constructors hamteq make-hamteq equal? eq-hash-code)
+(define-hamt-constructors hamteqv make-hamteqv eqv? eqv-hash-code)
+(define-hamt-constructors hamteq make-hamteq eq? eq-hash-code)
 
 
 (define (hamt-empty? h)
@@ -373,7 +373,7 @@
 
   (define (bnode-bit keyhash shift)
     (fxlshift 1 
-              (fxand (fxrshift keyhash shift) #x1f)))
+              (fxand (fxrshift keyhash shift) #x0f)))
 
   (define (bnode-idx bitmap bit)
     (popcount32 (fxand bitmap (fx- bit 1))))
