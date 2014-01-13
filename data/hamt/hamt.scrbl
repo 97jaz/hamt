@@ -7,17 +7,9 @@
 
 @title{Immutable Hash Array Mapped Tries}
 @author{@(author+email "Jon Zeppieri" "zeppieri@gmail.com")}
-@bibliography[
-@bib-entry[#:key "Bagwell2000"
-           #:title "Ideal Hash Trees"
-           #:author "Phil Bagwell"
-           #:location "(Report). Infoscience Department, École Polytechnique Fédérale de Lausanne"
-           #:date "2000"
-           #:url "http://lampwww.epfl.ch/papers/idealhashtrees.pdf"]
-]
 
 @(define (mutable-key-caveat)
-  @elemref['(caveat "mutable-keys")]{caveat concerning mutable keys})
+  @elemref['(caveat "hamt-mutable-keys")]{caveat concerning mutable keys})
 
 @(define (see-also-mutable-key-caveat)
    @t{See also the @mutable-key-caveat[] above.})
@@ -26,12 +18,12 @@
 @defmodule[data/hamt]
 
 This package defines @deftech{immutable hash array mapped tries} (or @deftech{HAMT}s, for short).
-A @tech{HAMT} is a @tech[#:doc '(lib "scribblings/reference/dicts.scrbl")]{dictionary}, and its
-interface mimics that of an immutable @tech[#:doc '(lib "scribblings/reference/hashes.scrbl")]{hash table}.
+A @tech{HAMT} is a @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{dictionary}, and its
+interface mimics that of an immutable @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{hash table}.
 
 Hash array mapped tries are described in @cite["Bagwell2000"].
 
-@elemtag['(caveat "mutable-keys")]{@bold{Caveat concerning mutable
+@elemtag['(caveat "hamt-mutable-keys")]{@bold{Caveat concerning mutable
 keys:}} If a key in an @racket[equal?]-based @tech{HAMT} is mutated
 (e.g., a key string is modified with @racket[string-set!]), then the
 @tech{HAMT}'s behavior for insertion, lookup, and remove operations
@@ -160,6 +152,7 @@ Returns a list of the keys in @racket[hamt] in an unspecified order.
 Returns a list of the values in @racket[hamt] in an unspecified order.
 }
 
+@section{Performance}
 
 @defmodule[data/hamt/fast]
 
@@ -167,8 +160,6 @@ This package provides exactly the same interface as @racket[data/hamt], but the 
 exports are not wrapped in contracts. Therefore, passing unexpected kinds of data to these procedures will 
 likely result in error messages that aren't especially helpful. On the other hand, they will run much
 faster than than their counterparts with contracts.
-
-@section{Performance}
 
 Because @racket[data/hamt] provides essentially the same functionality as Racket's built-in @racket[hash]
 data type, there would be no point in using the former unless it provided some advantage over the latter.
@@ -188,3 +179,11 @@ dictionary to use in your program.
 
 
 
+@bibliography[
+@bib-entry[#:key "Bagwell2000"
+           #:title "Ideal Hash Trees"
+           #:author "Phil Bagwell"
+           #:location "(Report). Infoscience Department, École Polytechnique Fédérale de Lausanne"
+           #:date "2000"
+           #:url "http://lampwww.epfl.ch/papers/idealhashtrees.pdf"]
+]
