@@ -78,6 +78,17 @@
   (check-true (hamt-has-key? h symbol-key))
   (check-false (hamt-has-key? h 'something-else)))
 
+;; hamt-has-value?
+(let ([h (hamt 0 0 1 '1 2 #\2 3 "3")])
+  (check-true (hamt-has-value? h 0))
+  (check-true (hamt-has-value? h '1))
+  (check-true (hamt-has-value? h #\2))
+  (check-true (hamt-has-value? h "3"))
+
+  (check-false (hamt-has-value? h "hello"))
+  (check-true (hamt-has-value? h (number->string 3) equal?))
+  (check-false (hamt-has-value? h (number->string 3) eq?)))
+
 ;; hamt-ref
 (let ([h (hamt-of-size 32)])
   (check-equal? (hamt-ref h 0) "0")
@@ -96,7 +107,7 @@
   (check-eqv? (hamt-count h1a) 1)
   (check-eqv? (hamt-count h1b) 1)
   (check-eqv? (hamt-count h2) 2)
-  
+
   (check-false (hamt-ref h0 'foo #f))
   (check-equal? (hamt-ref h1a 'foo) "foo")
   (check-equal? (hamt-ref h1b 'foo) "not-foo")
@@ -155,4 +166,3 @@
 ;; hamt-values
 (check-equal? (sort (hamt-values fbb-hamt) string<?)
               '("bar" "baz" "foo"))
-                      
