@@ -3,6 +3,8 @@
 (require racket/match
          racket/generator
          racket/dict
+         racket/stream
+         (prefix-in c: data/collection)
          "popcount.rkt"
          "array.rkt")
 
@@ -183,6 +185,7 @@
   (write-string ">" port))
 
 (struct HAMT (name root count key= key#)
+  #:transparent
   #:methods gen:dict
   [(define dict-ref           hamt-ref)
    (define dict-set           hamt-set)
@@ -193,8 +196,17 @@
    (define dict-iterate-key   hamt-iterate-key)
    (define dict-iterate-value hamt-iterate-value)]
   #:methods gen:custom-write
-  [(define write-proc hamt-write)])
-
+  [(define write-proc hamt-write)]
+  #:methods c:gen:collection
+  [(define (conj coll item) (hamt-set coll (car item) (cdr item)))]
+  #:methods c:gen:countable
+  [(define length hamt-count)
+   (define (known-finite? x) #t)]
+  #:methods c:gen:sequence
+  [(define empty? hamt-empty?)
+   (define (first seq) (stream-first (sequence->stream (in-dict seq))))
+   (define (rest seq)  (stream-rest (sequence->stream (in-dict seq))))
+   (define (reverse seq) (c:reverse (sequence->stream (in-dict seq))))])
 
 (define (node-ref node key keyhash key= shift default)
   (cond [(bnode? node) (bnode-ref node key keyhash key= shift default)]

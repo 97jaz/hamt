@@ -166,3 +166,24 @@
 ;; hamt-values
 (check-equal? (sort (hamt-values fbb-hamt) string<?)
               '("bar" "baz" "foo"))
+
+;; iterators
+(let* ([keys '(1 2 3 4 5 6 7 8 9 10)]
+       [vals '(a b c d e f g h i j)]
+       [alist (map cons keys vals)])
+  (check-equal? (for/hamt ([k keys] [v vals]) (values k v))
+                (make-hamt alist))
+  (check-equal? (for/hamteqv ([k keys] [v vals]) (values k v))
+                (make-hamteqv alist))
+  (check-equal? (for/hamteq ([k keys] [v vals]) (values k v))
+                (make-hamteq alist)))
+
+(let* ([keys '(1 2 3)]
+       [vals '(a b c)]
+       [alist (for*/list ([k keys] [v vals]) (cons k v))])
+  (check-equal? (for*/hamt ([k keys] [v vals]) (values k v))
+                (make-hamt alist))
+  (check-equal? (for*/hamteqv ([k keys] [v vals]) (values k v))
+                (make-hamteqv alist))
+  (check-equal? (for*/hamteq ([k keys] [v vals]) (values k v))
+                (make-hamteq alist)))

@@ -1,9 +1,13 @@
-#lang scribble/doc
+#lang scribble/manual
 
-@(require scribble/manual
-          (for-label racket/base
+@(require (for-label racket/base
                      racket/contract
-                     data/hamt))
+                     racket/dict
+                     data/hamt
+                     (only-in data/collection
+                              gen:sequence
+                              gen:countable
+                              gen:collection)))
 
 @title{Immutable Hash Array Mapped Tries}
 @author{@(author+email "Jon Zeppieri" "zeppieri@gmail.com")}
@@ -20,6 +24,10 @@
 This package defines @deftech{immutable hash array mapped tries} (or @deftech{HAMT}s, for short).
 A @tech{HAMT} is a @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{dictionary}, and its
 interface mimics that of an immutable @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{hash table}.
+(Since this package was first released, Racket's own immutable hashes have been re-implemented as HAMTs, in C.)
+
+In addition to the functions documented here, the @tech{HAMT}s provided by this module implement the
+@racket[gen:dict], @racket[gen:collection], @racket[gen:sequence], and @racket[gen:sequence] generic interfaces.
 
 Hash array mapped tries are described in @cite["Bagwell2000"].
 
@@ -92,8 +100,8 @@ the table in the order they appear in the argument list, so later mappings can h
 
 @defproc[(hamt-ref [hamt hamt?]
                    [key any/c]
-                   [failure-result (λ ()
-                                     (raise (exn:fail:contract ....)))])
+                   [failure-result any/c (λ ()
+                                           (raise (exn:fail:contract ....)))])
          any/c]{
 Returns the value for @racket[key] in @racket[hamt]. If no value is found for @racket[key], then
 @racket[failure-result] determines the result:
@@ -113,6 +121,12 @@ Returns the value for @racket[key] in @racket[hamt]. If no value is found for @r
 @defproc[(hamt-has-key? [hamt hamt?] [key any/c]) boolean?]{
 Returns @racket[#t] if @racket[hamt] contains a value for the given @racket[key], @racket[#f] otherwise.
 }
+
+@defproc[(hamt-has-value? [hamt hamt?] [value any/c] [equal? (-> any/c any/c boolean?) equal?]) boolean?]{
+Returns @racket[#t] if @racket[hamt] contains the given @racket[value], @racket[#f] otherwise. (This
+function is O(n) in the size of @racket[hamt].)
+}
+
 
 @defproc[(hamt-remove [hamt hamt?] [key any/c]) hamt?]{
 Functionally removes any existing mapping for @racket[key] in @racket[hamt], returning the fresh @tech{HAMT}.
@@ -150,6 +164,16 @@ Returns a list of the keys in @racket[hamt] in an unspecified order.
 
 @defproc[(hamt-values [hamt hamt?]) (listof any/c)]{
 Returns a list of the values in @racket[hamt] in an unspecified order.
+}
+
+@defform*[((for/hamt (for-clause ...) body-or-break ... body)
+           (for*/hamt (for-clause ...) body-or-break ... body)
+           (for/hamteqv (for-clause ...) body-or-break ... body)
+           (for*/hamteqv (for-clause ...) body-or-break ... body)
+           (for/hamteq (for-clause ...) body-or-break ... body)
+           (for*/hamteq (for-clause ...) body-or-break ... body))]{
+Like @racket[for/hash] and its variants, except that it produces a @racket[hamt],
+@racket[hamteqv], or @racket[hamteq].
 }
 
 @section{Performance}
